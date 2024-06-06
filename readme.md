@@ -1,6 +1,6 @@
 # gas-spreadsheet-object-mapper
 
-[English](./README.en.md) | 日本語
+[English](./readme.en.md) | 日本語
 
 [![npm version](https://badge.fury.io/js/%40fumigoro%2Fgas-spreadsheet-object-mapper.svg)](https://badge.fury.io/js/%40fumigoro%2Fgas-spreadsheet-object-mapper)
 

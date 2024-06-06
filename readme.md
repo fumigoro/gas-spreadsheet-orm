@@ -1,5 +1,9 @@
 # gas-spreadsheet-object-mapper
 
+[English](./README.en.md) | 日本語
+
+[![npm version](https://badge.fury.io/js/%40fumigoro%2Fgas-spreadsheet-object-mapper.svg)](https://badge.fury.io/js/%40fumigoro%2Fgas-spreadsheet-object-mapper)
+
 Google Apps Scriptにて、スプレッドシートに対する型付きのCRUDを実現するパッケージです。
 
 型定義にはTypeScriptの`type`ではなく`class`を使用するため、JavaScriptでも恩恵を受けることができます。
@@ -26,7 +30,7 @@ Google Apps Scriptにて、スプレッドシートに対する型付きのCRUD�
 npm install @fumigoro/gas-spreadsheet-object-mapper
 ```
 
-## Define data class
+## データのclassを定義
 
  `@SpreadSheetColumn`デコレーターを使用して、各メンバとスプレッドシート上のカラム名をマッピングします。
  

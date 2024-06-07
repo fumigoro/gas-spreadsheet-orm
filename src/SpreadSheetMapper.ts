@@ -85,7 +85,7 @@ export class SpreadSheetMapper<T extends DataTypeBase> {
    * @param id - The ID of the data object.
    * @returns The data object if found, otherwise undefined.
    */
-  get(id: string): T | undefined {
+  get(id: T['id']): T | undefined {
     return this.data.find(d => d.id === id);
   }
 

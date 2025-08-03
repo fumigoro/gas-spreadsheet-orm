@@ -1,73 +1,46 @@
 // Core types for the Spreadsheet ORM
 
-export type ColumnType = "string" | "number" | "boolean" | "date";
-
-export interface ColumnDefinition {
-	/** The data type of the column */
-	type: ColumnType;
-	/** The column name in the spreadsheet */
+// Column definition with type inference
+export interface ColumnDef<T = unknown> {
 	column: string;
-	/** Whether this column is the primary key */
 	primary?: boolean;
-	/** Whether this column allows empty values */
 	nullable?: boolean;
-	/** Default value or function that generates default value */
-	default?: unknown | (() => unknown);
-	/** Function to parse value when reading from spreadsheet */
-	parser?: (value: unknown) => unknown;
-	/** Function to serialize value when writing to spreadsheet */
-	serializer?: (value: unknown) => unknown;
+	default?: T | (() => T);
+	parser?: (value: unknown) => T;
+	serializer?: (value: T) => unknown;
 }
 
-export type SchemaDefinition = {
-	[tableName: string]: {
-		[fieldName: string]: ColumnDefinition;
-	};
-};
+// Schema definition for a single table - use any to allow different column types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TableSchema = Record<string, ColumnDef<any>>;
 
-export type InferModelType<T extends Record<string, ColumnDefinition>> = {
-	[K in keyof T]: T[K]["type"] extends "string"
-		? string
-		: T[K]["type"] extends "number"
-			? number
-			: T[K]["type"] extends "boolean"
-				? boolean
-				: T[K]["type"] extends "date"
-					? Date
-					: unknown;
+// Extract TypeScript types from schema
+export type InferRecord<T extends TableSchema> = {
+	[K in keyof T]: T[K] extends ColumnDef<infer U> ? U : unknown;
 };
 
 // Query types
-type FilterOperators<T> = {
-	equals?: T;
-	not?: T;
-	in?: T[];
-	notIn?: T[];
-} & (T extends string
-	? {
-			contains?: string;
-			startsWith?: string;
-			endsWith?: string;
-		}
-	: Record<string, never>) &
-	(T extends number | Date
-		? {
-				lt?: T;
-				lte?: T;
-				gt?: T;
-				gte?: T;
-			}
-		: Record<string, never>);
-
 export type WhereCondition<T> = {
-	[K in keyof T]?: T[K] | FilterOperators<T[K]>;
+	[K in keyof T]?:
+		| T[K]
+		| {
+				equals?: T[K];
+				not?: T[K];
+				in?: T[K][];
+				notIn?: T[K][];
+				contains?: T[K] extends string ? string : never;
+				startsWith?: T[K] extends string ? string : never;
+				endsWith?: T[K] extends string ? string : never;
+				lt?: T[K] extends number | Date ? T[K] : never;
+				lte?: T[K] extends number | Date ? T[K] : never;
+				gt?: T[K] extends number | Date ? T[K] : never;
+				gte?: T[K] extends number | Date ? T[K] : never;
+		  };
 };
 
 export interface FindManyArgs<T> {
 	where?: WhereCondition<T>;
-	orderBy?: {
-		[K in keyof T]?: "asc" | "desc";
-	};
+	orderBy?: { [K in keyof T]?: "asc" | "desc" };
 	take?: number;
 	skip?: number;
 }
@@ -77,7 +50,7 @@ export interface FindUniqueArgs<T> {
 }
 
 export interface CreateArgs<T> {
-	data: Partial<Omit<T, "id">> & { id?: T extends { id: infer U } ? U : never };
+	data: Partial<T>;
 }
 
 export interface UpdateArgs<T> {
@@ -87,8 +60,4 @@ export interface UpdateArgs<T> {
 
 export interface DeleteArgs<T> {
 	where: WhereCondition<T>;
-}
-
-export interface DeleteManyArgs<T> {
-	where?: WhereCondition<T>;
 }

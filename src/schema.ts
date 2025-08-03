@@ -1,54 +1,39 @@
-import type { ColumnDefinition } from "./types";
+import type { ColumnDef } from "./types";
 
-// Schema builder
-export const column = {
-	string: (
-		columnName: string,
-		options?: Partial<ColumnDefinition>,
-	): ColumnDefinition => ({
-		type: "string",
+// Column builders
+export function column<T>(
+	columnName: string,
+	options?: Omit<ColumnDef<T>, "column">,
+): ColumnDef<T> {
+	return {
 		column: columnName,
 		...options,
-	}),
-
-	number: (
-		columnName: string,
-		options?: Partial<ColumnDefinition>,
-	): ColumnDefinition => ({
-		type: "number",
-		column: columnName,
-		...options,
-	}),
-
-	boolean: (
-		columnName: string,
-		options?: Partial<ColumnDefinition>,
-	): ColumnDefinition => ({
-		type: "boolean",
-		column: columnName,
-		...options,
-	}),
-
-	date: (
-		columnName: string,
-		options?: Partial<ColumnDefinition>,
-	): ColumnDefinition => ({
-		type: "date",
-		column: columnName,
-		...options,
-	}),
-};
-
-// Helper function to define a table schema
-export function defineTable<T extends Record<string, ColumnDefinition>>(
-	schema: T,
-): T {
-	return schema;
+	};
 }
 
-// Helper function to define the entire schema
-export function defineSchema<
-	T extends Record<string, Record<string, ColumnDefinition>>,
->(schema: T): T {
-	return schema;
-}
+// Convenience builders for common types
+export const string = (
+	columnName: string,
+	options?: Omit<ColumnDef<string>, "column">,
+) => column<string>(columnName, options);
+
+export const number = (
+	columnName: string,
+	options?: Omit<ColumnDef<number>, "column">,
+) => column<number>(columnName, options);
+
+export const boolean = (
+	columnName: string,
+	options?: Omit<ColumnDef<boolean>, "column">,
+) => column<boolean>(columnName, options);
+
+export const date = (
+	columnName: string,
+	options?: Omit<ColumnDef<Date>, "column">,
+) =>
+	column<Date>(columnName, {
+		parser: (value: unknown) =>
+			value instanceof Date ? value : new Date(value as string),
+		serializer: (value: Date) => value.toISOString(),
+		...options,
+	});

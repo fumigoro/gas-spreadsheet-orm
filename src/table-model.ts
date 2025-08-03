@@ -10,7 +10,8 @@ import type {
 	UpdateArgs,
 } from "./types";
 
-type TableSchema = Record<string, ColumnDefinition>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TableSchema = Record<string, ColumnDefinition<any>>;
 
 export class TableModel<T extends TableSchema> {
 	private sheet!: GoogleAppsScript.Spreadsheet.Sheet;
@@ -22,7 +23,8 @@ export class TableModel<T extends TableSchema> {
 	/**
 	 * カラム名をキーとした各カラムの定義（型やパーサーなど）
 	 */
-	private columnMap: Map<keyof TableSchema, ColumnDefinition> = new Map();
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	private columnMap: Map<keyof TableSchema, ColumnDefinition<any>> = new Map();
 	private primaryKey!: keyof TableSchema;
 
 	constructor(
@@ -51,15 +53,15 @@ export class TableModel<T extends TableSchema> {
 		if (primaryKeyFields.length > 1) {
 			throw new Error(
 				`Multiple primary keys are not supported. ` +
-				`Sheet '${this.sheetName}' has primary keys defined in fields: [${primaryKeyFields.join(", ")}]. ` +
-				`Please check your schema definition and mark only one column as primary.`,
+					`Sheet '${this.sheetName}' has primary keys defined in fields: [${primaryKeyFields.join(", ")}]. ` +
+					`Please check your schema definition and mark only one column as primary.`,
 			);
 		}
 
 		if (primaryKeyFields.length === 0) {
 			throw new Error(
 				`No primary key defined for sheet '${this.sheetName}'. ` +
-				`Please specify a primary key in your schema.`,
+					`Please specify a primary key in your schema.`,
 			);
 		}
 
@@ -83,7 +85,8 @@ export class TableModel<T extends TableSchema> {
 		const obj = {} as Record<keyof T, unknown>;
 
 		for (const [fieldName, columnDef] of Object.entries(this.schema) as Array<
-			[keyof T, ColumnDefinition]
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			[keyof T, ColumnDefinition<any>]
 		>) {
 			const colIndex = this.headers.indexOf(columnDef.column);
 			if (colIndex !== -1) {
@@ -102,7 +105,8 @@ export class TableModel<T extends TableSchema> {
 		return this.headers.map((header) => {
 			const fieldEntry = Object.entries(this.schema).find(
 				([_, columnDef]) => columnDef.column === header,
-			) as [keyof T, ColumnDefinition] | undefined;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			) as [keyof T, ColumnDefinition<any>] | undefined;
 
 			if (fieldEntry) {
 				const [fieldName, columnDef] = fieldEntry;
@@ -172,7 +176,7 @@ export class TableModel<T extends TableSchema> {
 
 		// Apply defaults
 		for (const [fieldName, columnDef] of Object.entries(this.schema) as Array<
-			[keyof T, ColumnDefinition]
+			[keyof T, ColumnDefinition<unknown>]
 		>) {
 			if (columnDef.default !== undefined && newData[fieldName] === undefined) {
 				newData[fieldName] =

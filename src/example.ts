@@ -1,40 +1,33 @@
-// Example usage of the new Prisma-like Spreadsheet ORM
+// Example usage of the simplified Spreadsheet ORM
 
-import { column, createSpreadsheetClient, defineSchema } from "./index";
+import { boolean, date, number, SpreadsheetClient, string } from "./index";
 
-// 1. Define your schema
-const schema = defineSchema({
-	user: {
-		id: column.number("ID", { primary: true }),
-		name: column.string("Name"),
-		email: column.string("Email"),
-		age: column.number("Age"),
-		isActive: column.boolean("IsActive", { default: true }),
-		createdAt: column.date("CreatedAt", { default: () => new Date() }),
-	},
+// 1. Define your schema for a single table
+const userSchema = {
+	id: number("ID", { primary: true }),
+	name: string("Name"),
+	email: string("Email"),
+	age: number("Age"),
+	isActive: boolean("IsActive", { default: true }),
+	createdAt: date("CreatedAt", { default: () => new Date() }),
+};
 
-	post: {
-		id: column.number("ID", { primary: true }),
-		title: column.string("Title"),
-		content: column.string("Content"),
-		authorId: column.number("AuthorID"),
-		publishedAt: column.date("PublishedAt"),
-	},
-});
-
-// 2. Create client
-const client = createSpreadsheetClient({
+// 2. Create client for the table
+const userClient = new SpreadsheetClient({
 	spreadsheetId: "your-spreadsheet-id",
-	schema,
+	sheetName: "Users",
+	schema: userSchema,
 });
 
-// 3. Usage examples
-async function _examples() {
+// 3. Usage examples with full type safety
+async function examples() {
 	// Find all users
-	const _allUsers = await client.user.findMany();
+	const allUsers = await userClient.findMany();
+	console.log(allUsers[0].name); // Type: string
+	console.log(allUsers[0].age); // Type: number
 
 	// Find users with conditions
-	const _activeUsers = await client.user.findMany({
+	const activeUsers = await userClient.findMany({
 		where: {
 			isActive: true,
 			age: { gte: 18 },
@@ -46,49 +39,63 @@ async function _examples() {
 	});
 
 	// Find a specific user
-	const _user = await client.user.findUnique({
+	const user = await userClient.findUnique({
 		where: { id: 1 },
 	});
+	console.log(user?.name); // Type: string | undefined
 
 	// Create a new user
-	const _newUser = await client.user.create({
+	const newUser = await userClient.create({
 		data: {
 			name: "John Doe",
 			email: "john@example.com",
 			age: 30,
+			// isActive and createdAt will use defaults
 		},
 	});
+	console.log(newUser.name); // Type: string
 
 	// Update a user
-	const _updatedUser = await client.user.update({
+	const updatedUser = await userClient.update({
 		where: { id: 1 },
 		data: { age: 31 },
 	});
+	console.log(updatedUser.age); // Type: number
 
 	// Delete a user
-	await client.user.delete({
+	const deletedUser = await userClient.delete({
 		where: { id: 1 },
 	});
-
-	// Delete multiple users
-	await client.user.deleteMany({
-		where: {
-			isActive: false,
-		},
-	});
+	console.log(deletedUser.name); // Type: string
 
 	// Count users
-	const _userCount = await client.user.count({
+	const userCount = await userClient.count({
 		where: { isActive: true },
 	});
+	console.log(userCount); // Type: number
+}
 
-	// Working with posts
-	const _posts = await client.post.findMany({
-		where: {
-			title: { contains: "TypeScript" },
-		},
-		orderBy: {
-			publishedAt: "desc",
+// Example with custom union types
+const statusSchema = {
+	id: number("ID", { primary: true }),
+	status: string("Status") as import("./types").ColumnDef<
+		"draft" | "published" | "archived"
+	>,
+	title: string("Title"),
+};
+
+const postClient = new SpreadsheetClient({
+	spreadsheetId: "your-spreadsheet-id",
+	sheetName: "Posts",
+	schema: statusSchema,
+});
+
+async function customTypeExample() {
+	const post = await postClient.create({
+		data: {
+			status: "draft", // Type: "draft" | "published" | "archived"
+			title: "My Post",
 		},
 	});
+	console.log(post.status); // Type: "draft" | "published" | "archived"
 }

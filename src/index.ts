@@ -1,20 +1,20 @@
 // Export main client
-export { createSpreadsheetClient, SpreadsheetClient } from './client';
+export { createSpreadsheetClient, SpreadsheetClient } from "./client";
 
 // Export schema builders
-export { column, defineTable, defineSchema } from './schema';
+export { column, defineSchema, defineTable } from "./schema";
 
 // Export types
 export type {
-  ColumnType,
-  ColumnDefinition,
-  SchemaDefinition,
-  InferModelType,
-  WhereCondition,
-  FindManyArgs,
-  FindUniqueArgs,
-  CreateArgs,
-  UpdateArgs,
-  DeleteArgs,
-  DeleteManyArgs,
-} from './types';
+	ColumnDefinition,
+	ColumnType,
+	CreateArgs,
+	DeleteArgs,
+	DeleteManyArgs,
+	FindManyArgs,
+	FindUniqueArgs,
+	InferModelType,
+	SchemaDefinition,
+	UpdateArgs,
+	WhereCondition,
+} from "./types";

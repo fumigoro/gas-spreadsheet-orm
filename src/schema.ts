@@ -35,9 +35,6 @@ export const column = {
 	): ColumnDefinition => ({
 		type: "date",
 		column: columnName,
-		parser: (value: unknown) =>
-			value instanceof Date ? value : new Date(value as string | number),
-		serializer: (value: unknown) => (value as Date).toISOString(),
 		...options,
 	}),
 };

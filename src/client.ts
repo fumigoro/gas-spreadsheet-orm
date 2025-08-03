@@ -6,6 +6,7 @@ type ClientModels<TSchema extends SchemaDefinition> = {
 };
 
 export class SpreadsheetClient<TSchema extends SchemaDefinition> {
+	// initializeModels()で全プロパティが揃うので、空オブジェクトにasで代入後の型を設定
 	public models: ClientModels<TSchema> = {} as ClientModels<TSchema>;
 
 	constructor(
@@ -28,7 +29,7 @@ export class SpreadsheetClient<TSchema extends SchemaDefinition> {
 	}
 }
 
-// Proxy to enable dynamic property access like client.user, client.post, etc.
+// client.user のように動的にテーブル名のプロパティにアクセスできるようにする
 export function createSpreadsheetClient<
 	TSchema extends SchemaDefinition,
 >(config: {
@@ -41,17 +42,16 @@ export function createSpreadsheetClient<
 		client.models,
 		{
 			get(target, prop: string | symbol) {
+				// 未定義のプロパティアクセス ≒ 未定義テーブルアクセスに対してエラーを返すと、
+				// console.log(client) のような内部でシンボルによるプロパティアクセスを試みるコードでエラーが発生する
+				// そのため undefined を返すようにしておく
+				// そのそもClientModelsの型定義により未定義のテーブルには型エラーでアクセスできない
 				if (!(prop in target)) {
-					throw new Error(`Table '${String(prop)}' not found in schema`);
-				}
-				
-				// 一旦Symbolアクセスは想定しないことにする。
-				if (typeof prop === "symbol") {
 					return undefined;
 				}
-				
 				return target[prop as keyof typeof target];
 			},
 		},
 	) as ClientModels<TSchema>;
 }
+

@@ -9,6 +9,8 @@ export interface ColumnDefinition {
 	column: string;
 	/** Whether this column is the primary key */
 	primary?: boolean;
+	/** Whether this column allows empty values */
+	nullable?: boolean;
 	/** Default value or function that generates default value */
 	default?: unknown | (() => unknown);
 	/** Function to parse value when reading from spreadsheet */

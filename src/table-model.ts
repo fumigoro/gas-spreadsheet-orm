@@ -10,12 +10,20 @@ import type {
 	UpdateArgs,
 } from "./types";
 
-export class TableModel<T extends Record<string, ColumnDefinition>> {
+type TableSchema = Record<string, ColumnDefinition>;
+
+export class TableModel<T extends TableSchema> {
 	private sheet!: GoogleAppsScript.Spreadsheet.Sheet;
+	/**
+	 * Spreadsheetから取得しパースしたデータ
+	 */
 	private data: InferModelType<T>[] = [];
-	private headers!: string[];
-	private columnMap: Map<string, ColumnDefinition> = new Map();
-	private primaryKey!: string;
+	private headers!: (keyof TableSchema)[];
+	/**
+	 * カラム名をキーとした各カラムの定義（型やパーサーなど）
+	 */
+	private columnMap: Map<keyof TableSchema, ColumnDefinition> = new Map();
+	private primaryKey!: keyof TableSchema;
 
 	constructor(
 		private spreadsheetId: string,
@@ -23,6 +31,7 @@ export class TableModel<T extends Record<string, ColumnDefinition>> {
 		private schema: T,
 	) {
 		this.setupColumnMap();
+		this.setupPrimaryKey();
 		this.initializeSheet();
 		this.load();
 	}
@@ -31,11 +40,9 @@ export class TableModel<T extends Record<string, ColumnDefinition>> {
 		for (const [fieldName, columnDef] of Object.entries(this.schema)) {
 			this.columnMap.set(fieldName, columnDef);
 		}
-
-		this.primaryKey = this.findPrimaryKey();
 	}
 
-	private findPrimaryKey() {
+	private setupPrimaryKey() {
 		const primaryKeyFields = Object.entries(this.schema)
 			.filter(([_, columnDef]) => columnDef.primary)
 			.map(([fieldName, _]) => fieldName);
@@ -44,19 +51,19 @@ export class TableModel<T extends Record<string, ColumnDefinition>> {
 		if (primaryKeyFields.length > 1) {
 			throw new Error(
 				`Multiple primary keys are not supported. ` +
-					`Sheet '${this.sheetName}' has primary keys defined in fields: [${primaryKeyFields.join(", ")}]. ` +
-					`Please check your schema definition and mark only one column as primary.`,
+				`Sheet '${this.sheetName}' has primary keys defined in fields: [${primaryKeyFields.join(", ")}]. ` +
+				`Please check your schema definition and mark only one column as primary.`,
 			);
 		}
 
 		if (primaryKeyFields.length === 0) {
 			throw new Error(
 				`No primary key defined for sheet '${this.sheetName}'. ` +
-					`Please specify a primary key in your schema.`,
+				`Please specify a primary key in your schema.`,
 			);
 		}
 
-		return primaryKeyFields[0];
+		this.primaryKey = primaryKeyFields[0];
 	}
 
 	private initializeSheet(): void {
@@ -69,6 +76,9 @@ export class TableModel<T extends Record<string, ColumnDefinition>> {
 		this.headers = this.sheet.getDataRange().getValues()[0] as string[];
 	}
 
+	/**
+	 * Spreadsheetの1行をオブジェクトに変換する
+	 */
 	private mapRowToObject(row: unknown[]): InferModelType<T> {
 		const obj = {} as Record<keyof T, unknown>;
 

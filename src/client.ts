@@ -6,7 +6,7 @@ type ClientModels<TSchema extends SchemaDefinition> = {
 };
 
 export class SpreadsheetClient<TSchema extends SchemaDefinition> {
-	private models: Partial<ClientModels<TSchema>> = {};
+	private models: ClientModels<TSchema> = {} as ClientModels<TSchema>;
 
 	constructor(
 		private config: {
@@ -18,14 +18,16 @@ export class SpreadsheetClient<TSchema extends SchemaDefinition> {
 	}
 
 	private initializeModels(): void {
+		const temporaryModels: Record<string, unknown> = {};
 		for (const [tableName, tableSchema] of Object.entries(this.config.schema)) {
 			// Create a model for each table in the schema
-			(this.models as Record<string, unknown>)[tableName] = new TableModel(
+			temporaryModels[tableName] = new TableModel(
 				this.config.spreadsheetId,
 				tableName,
 				tableSchema,
 			);
 		}
+		this.models = temporaryModels as ClientModels<TSchema>;
 	}
 
 	// Dynamic property access for models
@@ -34,7 +36,7 @@ export class SpreadsheetClient<TSchema extends SchemaDefinition> {
 		if (!model) {
 			throw new Error(`Model '${String(tableName)}' not found`);
 		}
-		return model as TableModel<TSchema[K]>;
+		return model;
 	}
 }
 

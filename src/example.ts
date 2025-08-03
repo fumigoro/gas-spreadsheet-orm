@@ -6,8 +6,8 @@ import { column, createSpreadsheetClient, defineSchema } from "./index";
 const schema = defineSchema({
 	user: {
 		id: column.number("ID", { primary: true }),
-		name: column.string("Name", { required: true }),
-		email: column.string("Email", { unique: true }),
+		name: column.string("Name"),
+		email: column.string("Email"),
 		age: column.number("Age"),
 		isActive: column.boolean("IsActive", { default: true }),
 		createdAt: column.date("CreatedAt", { default: () => new Date() }),
@@ -15,7 +15,7 @@ const schema = defineSchema({
 
 	post: {
 		id: column.number("ID", { primary: true }),
-		title: column.string("Title", { required: true }),
+		title: column.string("Title"),
 		content: column.string("Content"),
 		authorId: column.number("AuthorID"),
 		publishedAt: column.date("PublishedAt"),

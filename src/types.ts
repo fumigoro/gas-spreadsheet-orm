@@ -3,13 +3,17 @@
 export type ColumnType = "string" | "number" | "boolean" | "date";
 
 export interface ColumnDefinition {
+	/** The data type of the column */
 	type: ColumnType;
+	/** The column name in the spreadsheet */
 	column: string;
+	/** Whether this column is the primary key */
 	primary?: boolean;
-	unique?: boolean;
-	required?: boolean;
+	/** Default value or function that generates default value */
 	default?: unknown | (() => unknown);
+	/** Function to parse value when reading from spreadsheet */
 	parser?: (value: unknown) => unknown;
+	/** Function to serialize value when writing to spreadsheet */
 	serializer?: (value: unknown) => unknown;
 }
 

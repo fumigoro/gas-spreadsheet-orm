@@ -1,6 +1,6 @@
 import type { ColumnDefinition } from "./types";
 
-// Schema builder functions
+// Schema builder
 export const column = {
 	string: (
 		columnName: string,

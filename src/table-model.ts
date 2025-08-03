@@ -30,15 +30,33 @@ export class TableModel<T extends Record<string, ColumnDefinition>> {
 	private setupColumnMap(): void {
 		for (const [fieldName, columnDef] of Object.entries(this.schema)) {
 			this.columnMap.set(fieldName, columnDef);
-			if (columnDef.primary) {
-				this.primaryKey = fieldName;
-			}
 		}
 
-		// If no primary key is defined, assume 'id' is the primary key
-		if (!this.primaryKey && this.schema.id) {
-			this.primaryKey = "id";
+		this.primaryKey = this.findPrimaryKey();
+	}
+
+	private findPrimaryKey() {
+		const primaryKeyFields = Object.entries(this.schema)
+			.filter(([_, columnDef]) => columnDef.primary)
+			.map(([fieldName, _]) => fieldName);
+
+		// Check for multiple primary keys
+		if (primaryKeyFields.length > 1) {
+			throw new Error(
+				`Multiple primary keys are not supported. ` +
+					`Sheet '${this.sheetName}' has primary keys defined in fields: [${primaryKeyFields.join(", ")}]. ` +
+					`Please check your schema definition and mark only one column as primary.`,
+			);
 		}
+
+		if (primaryKeyFields.length === 0) {
+			throw new Error(
+				`No primary key defined for sheet '${this.sheetName}'. ` +
+					`Please specify a primary key in your schema.`,
+			);
+		}
+
+		return primaryKeyFields[0];
 	}
 
 	private initializeSheet(): void {

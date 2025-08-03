@@ -18,6 +18,3 @@ export type {
   DeleteArgs,
   DeleteManyArgs,
 } from './types';
-
-// Export legacy exports for backward compatibility
-export { SpreadSheetColumn, SpreadSheetMapper } from './SpreadSheetMapper';

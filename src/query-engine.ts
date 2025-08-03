@@ -5,7 +5,7 @@ export class QueryEngine<T> {
 
 	// Where条件のマッチング
 	private matchesWhere(item: T, where: WhereCondition<T>): boolean {
-		return (Object.entries(where) as Array<[keyof T, any]>).every(
+		return (Object.entries(where) as Array<[keyof T, unknown]>).every(
 			([key, condition]) => {
 				const value = item[key];
 
@@ -15,7 +15,10 @@ export class QueryEngine<T> {
 
 				if (typeof condition === "object" && condition !== null) {
 					// Type-safe condition handling
-					return this.evaluateCondition(value, condition);
+					return this.evaluateCondition(
+						value,
+						condition as Record<string, unknown>,
+					);
 				} else {
 					// Direct equality
 					return value === condition;

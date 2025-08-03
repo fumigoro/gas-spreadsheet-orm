@@ -29,12 +29,12 @@ const client = createSpreadsheetClient({
 });
 
 // 3. Usage examples
-async function examples() {
+async function _examples() {
 	// Find all users
-	const allUsers = await client.user.findMany();
+	const _allUsers = await client.user.findMany();
 
 	// Find users with conditions
-	const activeUsers = await client.user.findMany({
+	const _activeUsers = await client.user.findMany({
 		where: {
 			isActive: true,
 			age: { gte: 18 },
@@ -46,12 +46,12 @@ async function examples() {
 	});
 
 	// Find a specific user
-	const user = await client.user.findUnique({
+	const _user = await client.user.findUnique({
 		where: { id: 1 },
 	});
 
 	// Create a new user
-	const newUser = await client.user.create({
+	const _newUser = await client.user.create({
 		data: {
 			name: "John Doe",
 			email: "john@example.com",
@@ -60,7 +60,7 @@ async function examples() {
 	});
 
 	// Update a user
-	const updatedUser = await client.user.update({
+	const _updatedUser = await client.user.update({
 		where: { id: 1 },
 		data: { age: 31 },
 	});
@@ -78,12 +78,12 @@ async function examples() {
 	});
 
 	// Count users
-	const userCount = await client.user.count({
+	const _userCount = await client.user.count({
 		where: { isActive: true },
 	});
 
 	// Working with posts
-	const posts = await client.post.findMany({
+	const _posts = await client.post.findMany({
 		where: {
 			title: { contains: "TypeScript" },
 		},

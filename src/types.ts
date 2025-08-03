@@ -8,9 +8,9 @@ export interface ColumnDefinition {
 	primary?: boolean;
 	unique?: boolean;
 	required?: boolean;
-	default?: any | (() => any);
-	parser?: (value: any) => any;
-	serializer?: (value: any) => any;
+	default?: unknown | (() => unknown);
+	parser?: (value: unknown) => unknown;
+	serializer?: (value: unknown) => unknown;
 }
 
 export type SchemaDefinition = {
@@ -28,7 +28,7 @@ export type InferModelType<T extends Record<string, ColumnDefinition>> = {
 				? boolean
 				: T[K]["type"] extends "date"
 					? Date
-					: any;
+					: unknown;
 };
 
 // Query types
@@ -43,7 +43,7 @@ type FilterOperators<T> = {
 			startsWith?: string;
 			endsWith?: string;
 		}
-	: {}) &
+	: Record<string, never>) &
 	(T extends number | Date
 		? {
 				lt?: T;
@@ -51,7 +51,7 @@ type FilterOperators<T> = {
 				gt?: T;
 				gte?: T;
 			}
-		: {});
+		: Record<string, never>);
 
 export type WhereCondition<T> = {
 	[K in keyof T]?: T[K] | FilterOperators<T[K]>;

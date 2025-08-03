@@ -80,7 +80,7 @@ export class TableModel<T extends Record<string, ColumnDefinition>> {
 				const [fieldName, columnDef] = fieldEntry;
 				let value = obj[fieldName];
 				if (columnDef.serializer) {
-					value = columnDef.serializer(value);
+					value = columnDef.serializer(value as unknown) as typeof value;
 				}
 				return value;
 			}

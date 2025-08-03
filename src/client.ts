@@ -20,7 +20,7 @@ export class SpreadsheetClient<TSchema extends SchemaDefinition> {
 	private initializeModels(): void {
 		for (const [tableName, tableSchema] of Object.entries(this.config.schema)) {
 			// Create a model for each table in the schema
-			(this.models as any)[tableName] = new TableModel(
+			(this.models as Record<string, unknown>)[tableName] = new TableModel(
 				this.config.spreadsheetId,
 				tableName,
 				tableSchema,
@@ -47,12 +47,15 @@ export function createSpreadsheetClient<
 }): SpreadsheetClient<TSchema> & ClientModels<TSchema> {
 	const client = new SpreadsheetClient(config);
 
-	return new Proxy(client as any, {
-		get(target, prop: string | symbol) {
-			if (typeof prop === "string" && prop in config.schema) {
-				return target.get(prop);
-			}
-			return target[prop];
+	return new Proxy(
+		client as SpreadsheetClient<TSchema> & ClientModels<TSchema>,
+		{
+			get(target, prop: string | symbol) {
+				if (typeof prop === "string" && prop in config.schema) {
+					return target.get(prop);
+				}
+				return target[prop as keyof typeof target];
+			},
 		},
-	});
+	);
 }

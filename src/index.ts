@@ -2,7 +2,11 @@
 export { SpreadsheetClient } from "./client";
 
 // Export schema builders
-export { boolean, column, date, number, string } from "./schema";
+export {
+	column,
+	defineSchema,
+	createSheetClient,
+} from "./schema";
 
 // Export types
 export type {

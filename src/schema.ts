@@ -1,7 +1,22 @@
-import type { ColumnDef } from "./types";
+import type { ColumnDef, TableSchema } from "./types";
+import { SpreadsheetClient } from "./client";
+
+// Schema builder with better type inference
+export function defineSchema<T extends TableSchema>(schema: T): T {
+	return schema;
+}
+
+// Client factory function
+export function createSheetClient<T extends TableSchema>(config: {
+	spreadsheetId: string;
+	sheetName: string;
+	schema: T;
+}): SpreadsheetClient<T> {
+	return new SpreadsheetClient(config);
+}
 
 // Column builders
-export function column<T>(
+function defineColumn<T>(
 	columnName: string,
 	options?: Omit<ColumnDef<T>, "column">,
 ): ColumnDef<T> {
@@ -12,28 +27,46 @@ export function column<T>(
 }
 
 // Convenience builders for common types
-export const string = (
+function string(
 	columnName: string,
 	options?: Omit<ColumnDef<string>, "column">,
-) => column<string>(columnName, options);
+) {
+	return defineColumn<string>(columnName, options);
+}
 
-export const number = (
+function number(
 	columnName: string,
 	options?: Omit<ColumnDef<number>, "column">,
-) => column<number>(columnName, options);
+) {
+	return defineColumn<number>(columnName, options);
+}
 
-export const boolean = (
+function boolean(
 	columnName: string,
 	options?: Omit<ColumnDef<boolean>, "column">,
-) => column<boolean>(columnName, options);
+) {
+	return defineColumn<boolean>(columnName, options);
+}
 
-export const date = (
+function date(
 	columnName: string,
 	options?: Omit<ColumnDef<Date>, "column">,
-) =>
-	column<Date>(columnName, {
-		parser: (value: unknown) =>
-			value instanceof Date ? value : new Date(value as string),
-		serializer: (value: Date) => value.toISOString(),
-		...options,
-	});
+) {
+	return defineColumn<Date>(columnName, options);
+}
+
+function custom<T>(
+	columnName: string,
+	options?: Omit<ColumnDef<T>, "column">,
+): ColumnDef<T> {
+	return defineColumn<T>(columnName, options);
+}
+
+export const column = {
+	// Alias for column to maintain backward compatibility
+	string,
+	number,
+	boolean,
+	date,
+	custom,
+};

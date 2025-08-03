@@ -50,7 +50,7 @@ export interface FindUniqueArgs<T> {
 }
 
 export interface CreateArgs<T> {
-	data: Partial<T>;
+	data: T;
 }
 
 export interface UpdateArgs<T> {

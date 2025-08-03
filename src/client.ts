@@ -6,7 +6,7 @@ type ClientModels<TSchema extends SchemaDefinition> = {
 };
 
 export class SpreadsheetClient<TSchema extends SchemaDefinition> {
-	private models: ClientModels<TSchema> = {} as ClientModels<TSchema>;
+	public models: ClientModels<TSchema> = {} as ClientModels<TSchema>;
 
 	constructor(
 		private config: {
@@ -18,25 +18,13 @@ export class SpreadsheetClient<TSchema extends SchemaDefinition> {
 	}
 
 	private initializeModels(): void {
-		const temporaryModels: Record<string, unknown> = {};
-		for (const [tableName, tableSchema] of Object.entries(this.config.schema)) {
-			// Create a model for each table in the schema
-			temporaryModels[tableName] = new TableModel(
+		for (const tableName in this.config.schema) {
+			this.models[tableName] = new TableModel(
 				this.config.spreadsheetId,
 				tableName,
-				tableSchema,
+				this.config.schema[tableName],
 			);
 		}
-		this.models = temporaryModels as ClientModels<TSchema>;
-	}
-
-	// Dynamic property access for models
-	get<K extends keyof TSchema>(tableName: K): TableModel<TSchema[K]> {
-		const model = this.models[tableName];
-		if (!model) {
-			throw new Error(`Model '${String(tableName)}' not found`);
-		}
-		return model;
 	}
 }
 
@@ -46,18 +34,24 @@ export function createSpreadsheetClient<
 >(config: {
 	spreadsheetId: string;
 	schema: TSchema;
-}): SpreadsheetClient<TSchema> & ClientModels<TSchema> {
+}): ClientModels<TSchema> {
 	const client = new SpreadsheetClient(config);
 
 	return new Proxy(
-		client as SpreadsheetClient<TSchema> & ClientModels<TSchema>,
+		client.models,
 		{
 			get(target, prop: string | symbol) {
-				if (typeof prop === "string" && prop in config.schema) {
-					return target.get(prop);
+				if (!(prop in target)) {
+					throw new Error(`Table '${String(prop)}' not found in schema`);
 				}
+				
+				// 一旦Symbolアクセスは想定しないことにする。
+				if (typeof prop === "symbol") {
+					return undefined;
+				}
+				
 				return target[prop as keyof typeof target];
 			},
 		},
-	);
+	) as ClientModels<TSchema>;
 }

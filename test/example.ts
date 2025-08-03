@@ -1,6 +1,6 @@
 // Example usage of the simplified Spreadsheet ORM
 
-import { column, createSheetClient, defineSchema } from "./index";
+import { column, createSheetClient, defineSchema } from "../src/index";
 
 // 1. Define your schema for a single table with better type inference
 const userSchema = defineSchema({
@@ -34,33 +34,19 @@ const userClient = createSheetClient({
 // });
 
 // 3. Usage examples with full type safety
-async function examples() {
-	// Find all users
-	const allUsers = await userClient.findMany();
-	console.log(allUsers[0].name); // Type: string
-	console.log(allUsers[0].age); // Type: number
-	console.log(allUsers[0].status); // Type: "draft" | "published" | "archived"
+function examples() {
+	// Get all users (from memory)
+	const allUsers = userClient.list();
+	console.log(allUsers[0]?.name); // Type: string
+	console.log(allUsers[0]?.age); // Type: number
+	console.log(allUsers[0]?.status); // Type: "draft" | "published" | "archived"
 
-	// Find users with conditions
-	const activeUsers = await userClient.findMany({
-		where: {
-			isActive: true,
-			age: { gte: 18 },
-		},
-		orderBy: {
-			name: "asc",
-		},
-		take: 10,
-	});
-
-	// Find a specific user
-	const user = await userClient.findUnique({
-		where: { id: 1 },
-	});
+	// Get a specific user by ID (from memory)
+	const user = userClient.get(1);
 	console.log(user?.status); // Type: "draft" | "published" | "archived" | undefined
 
 	// Create a new user
-	const newUser = await userClient.create({
+	const newUser = userClient.create({
 		data: {
 			id: 1, // Type: number
 			name: "John Doe",
@@ -73,29 +59,26 @@ async function examples() {
 				tags: ["new", "user"],
 				priority: 1,
 			},
-			// isActive and createdAt will use defaults
+			// isActive and createdAt will use defaults if not provided
 		},
 	});
 	console.log(newUser.name); // Type: string
 
-	// Update a user
-	const updatedUser = await userClient.update({
-		where: { id: 1 },
-		data: { age: 31 },
+	// Update a user (find by partial data match)
+	const updatedUser = userClient.update({
+		where: { id: 1 }, // find record with this id
+		data: { age: 31 }, // id is used to find the record, age is updated
 	});
 	console.log(updatedUser.age); // Type: number
 
-	// Delete a user
-	const deletedUser = await userClient.delete({
-		where: { id: 1 },
+	// Delete a user (find by partial data match)
+	const deletedUser = userClient.delete({
+		where: { id: 1 }, // find record with this id and delete it
 	});
 	console.log(deletedUser.name); // Type: string
 
-	// Count users
-	const userCount = await userClient.count({
-		where: { isActive: true },
-	});
-	console.log(userCount); // Type: number
+	// Count all users (from memory)
+	console.log(userClient.list().length); // Type: number
 }
 
 // Run examples

@@ -1,8 +1,7 @@
 import type {
 	CreateArgs,
 	DeleteArgs,
-	FindManyArgs,
-	FindUniqueArgs,
+	FindArgs,
 	InferRecord,
 	TableSchema,
 	UpdateArgs,
@@ -22,7 +21,7 @@ export class SpreadsheetClient<T extends TableSchema> {
 		this.schema = config.schema;
 		this.validateSchema();
 		this.initializeSheet(config.spreadsheetId, config.sheetName);
-		this.loadData();
+		this.load();
 	}
 
 	private validateSchema(): void {
@@ -46,11 +45,6 @@ export class SpreadsheetClient<T extends TableSchema> {
 		}
 		this.sheet = sheet;
 		this.headers = this.sheet.getDataRange().getValues()[0] as string[];
-	}
-
-	private loadData(): void {
-		const rows = this.sheet.getDataRange().getValues();
-		this.data = rows.slice(1).map((row) => this.parseRow(row));
 	}
 
 	private parseRow(row: unknown[]): InferRecord<T> {
@@ -103,146 +97,143 @@ export class SpreadsheetClient<T extends TableSchema> {
 		return result as InferRecord<T>;
 	}
 
-	private findRecordIndex(where: Record<string, unknown>): number {
+	private getPrimaryKeyField(): string {
+		const primaryKeys = Object.entries(this.schema)
+			.filter(([, columnDef]) => columnDef.primary)
+			.map(([fieldName]) => fieldName);
+
+		if (primaryKeys.length === 0) {
+			throw new Error("No primary key defined in schema");
+		}
+		return primaryKeys[0];
+	}
+
+	private findRecordByData(data: Partial<InferRecord<T>>): number {
 		return this.data.findIndex((record) => {
-			return Object.entries(where).every(([key, value]) => {
+			return Object.entries(data).every(([key, value]) => {
 				return record[key as keyof InferRecord<T>] === value;
 			});
 		});
 	}
 
-	// Public API
-	async findMany(
-		args?: FindManyArgs<InferRecord<T>>,
-	): Promise<InferRecord<T>[]> {
-		let result = [...this.data];
+	// Public API Methods
 
-		if (args?.where) {
-			result = result.filter((record) =>
-				this.matchesWhere(record, args.where as Record<string, unknown>),
-			);
-		}
-
-		if (args?.orderBy) {
-			const [field, direction] = Object.entries(args.orderBy)[0];
-			result.sort((a, b) => {
-				const aVal = a[field as keyof InferRecord<T>];
-				const bVal = b[field as keyof InferRecord<T>];
-				const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-				return direction === "desc" ? -comparison : comparison;
-			});
-		}
-
-		if (args?.skip) {
-			result = result.slice(args.skip);
-		}
-
-		if (args?.take) {
-			result = result.slice(0, args.take);
-		}
-
-		return result;
+	/**
+	 * Returns all records currently loaded in memory as a copy.
+	 * This operation is read-only and does not affect the original data.
+	 * @returns Array of all records in memory
+	 */
+	list(): InferRecord<T>[] {
+		return [...this.data];
 	}
 
-	async findUnique(
-		args: FindUniqueArgs<InferRecord<T>>,
-	): Promise<InferRecord<T> | null> {
-		const record = this.data.find((record) =>
-			this.matchesWhere(record, args.where),
+	/**
+	 * Finds a single record by its primary key value from memory.
+	 * @param id - The primary key value to search for
+	 * @returns The matching record or null if not found
+	 */
+	get(id: unknown): InferRecord<T> | null {
+		const primaryKeyField = this.getPrimaryKeyField();
+		const record = this.data.find(
+			(record) => record[primaryKeyField as keyof InferRecord<T>] === id,
 		);
 		return record || null;
 	}
 
-	async create(args: CreateArgs<InferRecord<T>>): Promise<InferRecord<T>> {
+	/**
+	 * Finds a single record by matching partial data from memory.
+	 * @param args - Object containing the search criteria
+	 * @returns The matching record or null if not found
+	 */
+	find(args: FindArgs<InferRecord<T>>): InferRecord<T> | null {
+		const index = this.findRecordByData(args.where);
+		if (index === -1) {
+			return null;
+		}
+		return this.data[index];
+	}
+
+	/**
+	 * Creates a new record in memory only. Does not write to spreadsheet.
+	 * Use save() method to persist changes to spreadsheet.
+	 * @param args - Object containing the data to create
+	 * @returns The created record with defaults applied
+	 */
+	create(args: CreateArgs<InferRecord<T>>): InferRecord<T> {
 		const record = this.applyDefaults(args.data);
-
 		this.data.push(record);
-		const values = this.serializeRow(record);
-		this.sheet.appendRow(values);
-
 		return record;
 	}
 
-	async update(args: UpdateArgs<InferRecord<T>>): Promise<InferRecord<T>> {
-		const index = this.findRecordIndex(args.where as Record<string, unknown>);
+	/**
+	 * Updates an existing record in memory only. Does not write to spreadsheet.
+	 * Finds the record by matching the provided data fields.
+	 * Use save() method to persist changes to spreadsheet.
+	 * @param args - Object containing the data to match and update
+	 * @returns The updated record
+	 * @throws Error if no matching record is found
+	 */
+	update(args: UpdateArgs<InferRecord<T>>): InferRecord<T> {
+		const index = this.findRecordByData(args.where);
 		if (index === -1) {
 			throw new Error("Record not found");
 		}
 
 		const updatedRecord = { ...this.data[index], ...args.data };
 		this.data[index] = updatedRecord;
-
-		const values = this.serializeRow(updatedRecord);
-		this.sheet.getRange(index + 2, 1, 1, values.length).setValues([values]);
-
 		return updatedRecord;
 	}
 
-	async delete(args: DeleteArgs<InferRecord<T>>): Promise<InferRecord<T>> {
-		const index = this.findRecordIndex(args.where as Record<string, unknown>);
+	/**
+	 * Deletes a record from memory only. Does not write to spreadsheet.
+	 * Finds the record by matching the provided data fields.
+	 * Use save() method to persist changes to spreadsheet.
+	 * @param args - Object containing the data to match for deletion
+	 * @returns The deleted record
+	 * @throws Error if no matching record is found
+	 */
+	delete(args: DeleteArgs<InferRecord<T>>): InferRecord<T> {
+		const index = this.findRecordByData(args.where);
 		if (index === -1) {
 			throw new Error("Record not found");
 		}
 
 		const deletedRecord = this.data[index];
 		this.data.splice(index, 1);
-		this.sheet.deleteRow(index + 2);
-
 		return deletedRecord;
 	}
 
-	async count(args?: FindManyArgs<InferRecord<T>>): Promise<number> {
-		const results = await this.findMany(args);
-		return results.length;
+	/**
+	 * Loads data from the spreadsheet into memory.
+	 * This replaces any existing data in memory.
+	 * @throws Error if spreadsheet operations fail
+	 */
+	load(): void {
+		const rows = this.sheet.getDataRange().getValues();
+		const dataRows = rows.slice(1);
+		this.data = dataRows.map((row) => this.parseRow(row));
 	}
 
-	private matchesWhere(
-		record: InferRecord<T>,
-		where: Record<string, unknown>,
-	): boolean {
-		return Object.entries(where).every(([key, condition]) => {
-			const value = record[key as keyof InferRecord<T>];
+	/**
+	 * Saves all in-memory data to the spreadsheet.
+	 * This operation clears all existing data in the spreadsheet (except headers)
+	 * and writes all current in-memory records.
+	 * @throws Error if spreadsheet operations fail
+	 */
+	save(): void {
+		// Clear existing data (except header)
+		const lastRow = this.sheet.getLastRow();
+		if (lastRow > 1) {
+			// より安全な方法で既存データをクリア
+			const range = this.sheet.getRange(2, 1, lastRow - 1, this.headers.length);
+			range.clearContent();
+		}
 
-			if (typeof condition === "object" && condition !== null) {
-				// Handle filter operators
-				return Object.entries(condition).every(([op, opValue]) => {
-					switch (op) {
-						case "equals":
-							return value === opValue;
-						case "not":
-							return value !== opValue;
-						case "in":
-							return Array.isArray(opValue) && opValue.includes(value);
-						case "notIn":
-							return Array.isArray(opValue) && !opValue.includes(value);
-						case "contains":
-							return (
-								typeof value === "string" && value.includes(opValue as string)
-							);
-						case "startsWith":
-							return (
-								typeof value === "string" && value.startsWith(opValue as string)
-							);
-						case "endsWith":
-							return (
-								typeof value === "string" && value.endsWith(opValue as string)
-							);
-						case "lt":
-							return (value as number | Date) < (opValue as number | Date);
-						case "lte":
-							return (value as number | Date) <= (opValue as number | Date);
-						case "gt":
-							return (value as number | Date) > (opValue as number | Date);
-						case "gte":
-							return (value as number | Date) >= (opValue as number | Date);
-						default:
-							return false;
-					}
-				});
-			} else {
-				// Direct value comparison
-				return value === condition;
-			}
-		});
+		// Write all data
+		if (this.data.length > 0) {
+			const serializedData = this.data.map((record) => this.serializeRow(record));
+			this.sheet.getRange(2, 1, serializedData.length, serializedData[0].length)
+				.setValues(serializedData);
+		}
 	}
 }

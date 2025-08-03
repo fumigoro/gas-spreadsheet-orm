@@ -10,10 +10,7 @@ export type {
 	ColumnDef,
 	CreateArgs,
 	DeleteArgs,
-	FindManyArgs,
-	FindUniqueArgs,
 	InferRecord,
 	TableSchema,
 	UpdateArgs,
-	WhereCondition,
 } from "./types";

@@ -27,7 +27,7 @@
   },
   "bugs": {
     "url": "https://github.com/fumigoro/gas-spreadsheet-orm/issues",
-    "email" : "gas-spreadsheet-orm@fumigoro.com"
+    "email": "gas-spreadsheet-orm@fumigoro.com"
   },
   "homepage": "https://github.com/fumigoro/gas-spreadsheet-orm#readme",
   "keywords": [
@@ -41,5 +41,8 @@
   },
   "devDependencies": {
     "@types/google-apps-script": "^1.0.83"
+  },
+  "volta": {
+    "node": "22.17.1"
   }
 }

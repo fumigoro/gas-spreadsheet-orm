@@ -1,5 +1,5 @@
-import type { ColumnDef, TableSchema } from "./types";
 import { SpreadsheetClient } from "./client";
+import type { ColumnDef, TableSchema } from "./types";
 
 // Schema builder with better type inference
 export function defineSchema<T extends TableSchema>(schema: T): T {
@@ -48,10 +48,7 @@ function boolean(
 	return defineColumn<boolean>(columnName, options);
 }
 
-function date(
-	columnName: string,
-	options?: Omit<ColumnDef<Date>, "column">,
-) {
+function date(columnName: string, options?: Omit<ColumnDef<Date>, "column">) {
 	return defineColumn<Date>(columnName, options);
 }
 

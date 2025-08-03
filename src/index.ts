@@ -1,11 +1,8 @@
-// Export main client
-export { SpreadsheetClient } from "./client";
-
 // Export schema builders
 export {
 	column,
-	defineSchema,
 	createSheetClient,
+	defineSchema,
 } from "./schema";
 
 // Export types

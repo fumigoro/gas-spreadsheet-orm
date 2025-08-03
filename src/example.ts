@@ -1,6 +1,6 @@
 // Example usage of the simplified Spreadsheet ORM
 
-import { column, defineSchema, createSheetClient } from "./index";
+import { column, createSheetClient, defineSchema } from "./index";
 
 // 1. Define your schema for a single table with better type inference
 const userSchema = defineSchema({
@@ -8,7 +8,7 @@ const userSchema = defineSchema({
 	name: column.string("Name"),
 	email: column.string("Email"),
 	age: column.number("Age"),
-	status: column.custom<'draft' | 'published' | 'archived'>("Status"),
+	status: column.custom<"draft" | "published" | "archived">("Status"),
 	metadata: column.custom<{ tags: string[]; priority: number }>("Metadata", {
 		parser: (value: unknown) => JSON.parse(value as string),
 		serializer: (value: unknown) => JSON.stringify(value),
@@ -29,7 +29,7 @@ const userClient = createSheetClient({
 // Option 2: Direct instantiation (also works)
 // const userClientDirect = new SpreadsheetClient({
 //   spreadsheetId: "your-spreadsheet-id",
-//   sheetName: "Users", 
+//   sheetName: "Users",
 //   schema: userSchema,
 // });
 
@@ -104,7 +104,7 @@ async function examples() {
 // Simple one-liner example:
 // const simpleClient = createSheetClient({
 //   spreadsheetId: "your-id",
-//   sheetName: "Sheet1", 
+//   sheetName: "Sheet1",
 //   schema: defineSchema({
 //     id: column.number("ID", { primary: true }),
 //     name: column.string("Name"),
@@ -120,7 +120,7 @@ async function examples() {
 
 // Both approaches provide full type safety:
 // const basicClient = new SpreadsheetClient({
-//   spreadsheetId: "your-spreadsheet-id", 
+//   spreadsheetId: "your-spreadsheet-id",
 //   sheetName: "BasicUsers",
 //   schema: basicUserSchema,
 // });

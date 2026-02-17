@@ -1,7 +1,5 @@
 # gas-spreadsheet-object-mapper
 
-English | [日本語](./readme.jp.md)
-
 [![npm version](https://badge.fury.io/js/%40fumigoro%2Fgas-spreadsheet-object-mapper.svg)](https://badge.fury.io/js/%40fumigoro%2Fgas-spreadsheet-object-mapper)
 
 **Use Google Spreadsheets as a typed, object-oriented database.**
